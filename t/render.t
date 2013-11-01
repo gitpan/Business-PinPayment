@@ -12,7 +12,7 @@ can_ok('Business::PinPayment', qw(new card_token json_response response successf
 
 $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 
-# test fail charge
-my $fail_charge = Business::PinPayment->new(config => {api_key => 'TestS3cret-ap1key'});
+# Missing API Key
+my $fail_charge = Business::PinPayment->new();
 
-like ($fail_charge->error(), qr/Authorization Required/, 'Invalid API Key');
+like ($fail_charge->error(), qr/Missing Secret API Key/, 'Invalid API Key');

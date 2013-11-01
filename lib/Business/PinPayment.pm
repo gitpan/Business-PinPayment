@@ -5,107 +5,111 @@ use HTTP::Request;
 use LWP::UserAgent;
 use JSON;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
-# build 1.1
+# build 2.1
 
 sub new {
-	my ($class, %args) = (@_);
-	my $self = bless {}, $class;
-	$args{config} ||= {};
-	
-	$self->{config} = {
-		api_version => '1', # the '1' in the API endpoint host names, e.g. https://test-api.pin.net.au/1/charges
-		api_key => undef, # Secret API Key
-		api => 'charges', # 'customers', 'refunds'
-		amount => '100', # 100 cents. Must be greater or equal to $1.00
-		currency => 'AUD', # 'USD', 'NZD', or 'SGD'
-		description => 'charges',
-		email => 'tester@work.com.au',
-		ip_address => undef,
-		charge_token => undef, # for refunds API
-		card_token => undef,
-		customer_token => undef,
-		card => {
-			number => '5520000000000000',
-			expiry_month => '05',
-			expiry_year => '2014',
-			cvc => '123',
-			name => 'John Smith',
-			address_line1 => '1 Test St',
-			address_line2 => undef,
-			address_city => 'Sydney',
-			address_postcode => '2000',
-			address_state => 'NSW',
-			address_country => 'Australia'
-		}
-	};
+  my ($class, %args) = (@_);
+  my $self = bless {}, $class;
+  $args{config} ||= {};
+  
+  $self->{config} = {
+    api_version => '1', # the '1' in the API endpoint host names, e.g. https://test-api.pin.net.au/1/charges
+    api_key => undef, # Secret API Key
+    api => 'charges', # 'customers', 'refunds'
+    amount => '100', # 100 cents. Must be greater or equal to $1.00
+    currency => 'AUD', # 'USD', 'NZD', or 'SGD'
+    description => 'charges',
+    email => 'tester@work.com.au',
+    ip_address => undef,
+    charge_token => undef, # for refunds API
+    card_token => undef,
+    customer_token => undef,
+    card => {
+      number => '5520000000000000',
+      expiry_month => '05',
+      expiry_year => '2014',
+      cvc => '123',
+      name => 'John Smith',
+      address_line1 => '1 Test St',
+      address_line2 => undef,
+      address_city => 'Sydney',
+      address_postcode => '2000',
+      address_state => 'NSW',
+      address_country => 'Australia'
+    }
+  };
 
-	foreach my $key (qw(api_key api amount currency description email ip_address charge_token card_token customer_token)) {
-		next unless defined $args{config}->{$key};
-		$self->{config}->{$key} = $args{config}->{$key};
-	}
+  foreach my $key (qw(api_key api amount currency description email ip_address charge_token card_token customer_token)) {
+    next unless defined $args{config}->{$key};
+    $self->{config}->{$key} = $args{config}->{$key};
+  }
 
-	if ($self->{config}->{card_token} || $self->{config}->{customer_token}) {
-		delete $self->{config}->{card};
-	}
-	else {
-		foreach my $key (qw(number expiry_month expiry_year cvc name address_line1 address_line2 address_city address_postcode address_state address_country)) {
-			next unless defined $args{config}->{card}->{$key};
-			$self->{config}->{card}->{$key} = $args{config}->{card}->{$key};
-		}
-	}
+  if ($self->{config}->{card_token} || $self->{config}->{customer_token}) {
+    delete $self->{config}->{card};
+  }
+  else {
+    foreach my $key (qw(number expiry_month expiry_year cvc name address_line1 address_line2 address_city address_postcode address_state address_country)) {
+      next unless defined $args{config}->{card}->{$key};
+      $self->{config}->{card}->{$key} = $args{config}->{card}->{$key};
+    }
+  }
 
-	my $url;
-	my $live = $args{live};
+  my $url;
+  my $live = $args{live};
 
-	my $api = delete ($self->{config}->{api});
-	my $api_version = delete ($self->{config}->{api_version});
-	my $api_key = delete ($self->{config}->{api_key});
-	die 'Missing Secret API Key' unless $api_key;
+  my $api = delete ($self->{config}->{api});
+  my $api_version = delete ($self->{config}->{api_version});
+  my $api_key = delete ($self->{config}->{api_key});
 
-	if ($live) {
-		$url = 'https://api.pin.net.au/' . $api_version;
-	}
-	else {
-		$url = 'https://test-api.pin.net.au/' . $api_version
-	}
+  unless ($api_key) {
+    $self->{error} = 'Missing Secret API Key';
+    return $self;
+  }
 
-	if ($api eq 'refunds' && $self->{config}->{charge_token}) {
-		$url .= '/charges/' . $self->{config}->{charge_token} .'/' .$api;
-	}
-	else {
-		$url .= '/' . $api;
-	}
+  if ($live) {
+    $url = 'https://api.pin.net.au/' . $api_version;
+  }
+  else {
+    $url = 'https://test-api.pin.net.au/' . $api_version
+  }
 
-	my $ua = LWP::UserAgent->new();
-	my $p = HTTP::Request->new(POST => $url);
-	$p->content_type('application/json');
-	$p->authorization_basic($api_key);
+  if ($api eq 'refunds' && $self->{config}->{charge_token}) {
+    $url .= '/charges/' . $self->{config}->{charge_token} .'/' .$api;
+  }
+  else {
+    $url .= '/' . $api;
+  }
 
-	my $json_request = to_json( $self->{config}, {utf8 => 1} );
-	$p->content($json_request) unless $api eq 'refunds';
-	$self->{response} = $ua->request($p);
-	
-	my $json_response;
+  my $ua = LWP::UserAgent->new();
+  my $p = HTTP::Request->new(POST => $url);
+  $p->content_type('application/json');
+  $p->authorization_basic($api_key);
+
+  my $json_request = to_json( $self->{config}, {utf8 => 1} );
+  $p->content($json_request) unless $api eq 'refunds';
+  $self->{response} = $ua->request($p);
+  
+  my $json_response;
   
   if ($self->{response}->is_success) {
     $json_response = from_json( $self->{response}->content, {utf8 => 1} );
     $self->{json_response} = $json_response;  
   }
 
-	if ($json_response) {
-		if ($json_response->{response}->{success}) {
-			$self->{successful} = 1;
-			$self->{id} = $json_response->{response}->{token};
-			$self->{status} = $json_response->{response}->{status_message};
-		}
-		elsif ($json_response->{response}->{token}) {
-			$self->{successful} = 1;
-			$self->{id} = $json_response->{response}->{token};
-			$self->{status} = $json_response->{response}->{status_message} || ''; # customers has non status message
-		}
-		elsif (exists $json_response->{error}) {
+  if ($json_response) {
+    if ($json_response->{response}->{success}) {
+      $self->{successful} = 1;
+      $self->{id} = $json_response->{response}->{token};
+      $self->{status} = $json_response->{response}->{status_message};
+    }
+    elsif ($json_response->{response}->{token}) {
+      $self->{successful} = 1;
+      $self->{id} = $json_response->{response}->{token};
+      $self->{status} = $json_response->{response}->{status_message} || ''; # customers has non status message
+    }
+    elsif (exists $json_response->{error}) {
       $self->{status} = $json_response->{error};
 
       my @errors = ($json_response->{error_description});
@@ -120,47 +124,47 @@ sub new {
       $self->{error} = $json_response->{messages}->[0]->{message};
       $self->{status} = $json_response->{messages}->[0]->{code};
     }
-	}
-	else {
+  }
+  else {
     $self->{error} = $self->{response}->status_line;
-	}
-	
-	return $self;
+  }
+  
+  return $self;
 }
 
 sub card_token {
-	my $self = shift;
-	return $self->{json_response}->{response}->{card}->{token} || '';
+  my $self = shift;
+  return $self->{json_response}->{response}->{card}->{token} || '';
 }
 
 sub json_response {
-	my $self = shift;
-	return $self->{json_response} || {};
+  my $self = shift;
+  return $self->{json_response} || {};
 }
 
 sub response {
-	my $self = shift;
-	return $self->{response} || '';
+  my $self = shift;
+  return $self->{response} || '';
 }
 
 sub successful {
-	my $self = shift;
-	return $self->{successful} || undef;
+  my $self = shift;
+  return $self->{successful} || undef;
 }
 
 sub error {
-	my $self = shift;
-	return $self->{error} || '';
+  my $self = shift;
+  return $self->{error} || '';
 }
 
 sub id {
-	my $self = shift;
-	return $self->{id} || ''; # charge or customer token depending on the API
+  my $self = shift;
+  return $self->{id} || ''; # charge or customer token depending on the API
 }
 
 sub status {
-	my $self = shift;
-	return $self->{status} || '';
+  my $self = shift;
+  return $self->{status} || '';
 }
 
 1;

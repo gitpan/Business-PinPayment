@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: Business-PinPayment
-version: 0.01
+version: 0.02
 author:
   - Xufeng (Danny) Liang <danny.glue@gmail.com>
 abstract: Interface to Pin Payment API
