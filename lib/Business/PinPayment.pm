@@ -5,7 +5,7 @@ use HTTP::Request;
 use LWP::UserAgent;
 use JSON;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 # build 2.1
 
@@ -263,105 +263,103 @@ The following script performs a test charge and then refunds it. It then creates
 
   # Test charge for $1.00
   my $charge = Business::PinPayment->new(
-      config => {
-          api_key => $test_api_key,
-          card => {
-              number => '5520000000000000',
-              expiry_month => '05',
-              expiry_year => '2014',
-              cvc => '123',
-              name => 'John Smith',
-              address_line1 => '1 Test St',
-              address_city => 'Sydney',
-              address_postcode => '2000',
-              address_state => 'NSW',
-              address_country => 'Australia',
-          },
-      },
+    config => {
+      api_key => $test_api_key,
+      card => {
+        number => '5520000000000000',
+        expiry_month => '05',
+        expiry_year => '2014',
+        cvc => '123',
+        name => 'John Smith',
+        address_line1 => '1 Test St',
+        address_city => 'Sydney',
+        address_postcode => '2000',
+        address_state => 'NSW',
+        address_country => 'Australia'
+      }
+    }
   );
 
   if ($charge->successful()) {
-      print 'Charge Token: ' . $charge->id() . "\n";
+    print 'Charge Token: ' . $charge->id() . "\n";
 
-      # Refund the charge
-      my $refund = Business::PinPayment->new(
-          config => {
-              api => 'refunds',
-              api_key => $test_api_key,
-              charge_token => $charge->id(),
-          },
-      );
-
-      if ($refund->successful()) {
-          print 'Refund Token: ' . $refund->id() . "\n";
+    # Refund the charge
+    my $refund = Business::PinPayment->new(
+      config => {
+        api => 'refunds',
+        api_key => $test_api_key,
+        charge_token => $charge->id()
       }
-      else {
-          print 'Refund Error: ' . $refund->error() . "\n";
-      }
+    );
 
+    if ($refund->successful()) {
+      print 'Refund Token: ' . $refund->id() . "\n";
+    }
+    else {
+      print 'Refund Error: ' . $refund->error() . "\n";
+    }
   }
   else {
-      print 'Charge Error: ' . $charge->error() . "\n";
+    print 'Charge Error: ' . $charge->error() . "\n";
   }
 
   # Create a customer
   my $customer = Business::PinPayment->new(
-      config => {
-          api => 'customers',
-          api_key => $test_api_key,
-          card => {
-              number => '5520000000000000',
-              expiry_month => '05',
-              expiry_year => '2014',
-              cvc => '123',
-              name => 'John Smith',
-              address_line1 => '1 Test St',
-              address_city => 'Sydney',
-              address_postcode => '2000',
-              address_state => 'NSW',
-              address_country => 'Australia',
-          },
-      },
+    config => {
+      api => 'customers',
+      api_key => $test_api_key,
+      card => {
+        number => '5520000000000000',
+        expiry_month => '05',
+        expiry_year => '2014',
+        cvc => '123',
+        name => 'John Smith',
+        address_line1 => '1 Test St',
+        address_city => 'Sydney',
+        address_postcode => '2000',
+        address_state => 'NSW',
+        address_country => 'Australia'
+      }
+    }
   );
 
   if ($customer->successful()) {
-      print 'Customer Token: ' . $customer->id() . "\n";
+    print 'Customer Token: ' . $customer->id() . "\n";
 
-      # Charge the customer $1.00
-      my $charge_customer = Business::PinPayment->new(
-          config => {
-              api => 'charges',
-              api_key => $test_api_key,
-              customer_token => $customer->id(),
-          },
-      );
+    # Charge the customer $1.00
+    my $charge_customer = Business::PinPayment->new(
+      config => {
+        api => 'charges',
+        api_key => $test_api_key,
+        customer_token => $customer->id()
+      },
+    );
 
-      if ($charge_customer->successful()) {
-          print 'Charge Customer Token: ' . $charge_customer->id() . "\n";
-      }
-      else {
-          print 'Charge Customer Error: ' . $charge_customer->error() . "\n";
-      }
+    if ($charge_customer->successful()) {
+      print 'Charge Customer Token: ' . $charge_customer->id() . "\n";
+    }
+    else {
+      print 'Charge Customer Error: ' . $charge_customer->error() . "\n";
+    }
 
-      # Charge the customer's card token $1.00
-      my $charge_card = Business::PinPayment->new(
-          config => {
-              api => 'charges',
-              api_key => $test_api_key,
-              card_token => $customer->card_token(),
-          },
-      );
+    # Charge the customer's card token $1.00
+    my $charge_card = Business::PinPayment->new(
+      config => {
+        api => 'charges',
+        api_key => $test_api_key,
+        card_token => $customer->card_token(),
+      },
+    );
 
-      if ($charge_card->successful()) {
-          print 'Charge Card Token: ' . $charge_card->id() . "\n";
-      }
-      else {
-          print 'Charge Card Error: ' . $charge_card->error() . "\n";
-      }
-
+    if ($charge_card->successful()) {
+      print 'Charge Card Token: ' . $charge_card->id() . "\n";
+    }
+    else {
+      print 'Charge Card Error: ' . $charge_card->error() . "\n";
+    }
   }
   else {
-      print 'Customer Error: ' . $charge->error() . "\n";
+    print 'Customer Error: ' . $charge->error() . "\n";
   }
 
 

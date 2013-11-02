@@ -14,5 +14,6 @@ $ENV{PERL_LWP_SSL_VERIFY_HOSTNAME} = 0;
 
 # Missing API Key
 my $fail_charge = Business::PinPayment->new();
+my $api_error = $fail_charge->error();
 
-like ($fail_charge->error(), qr/Missing Secret API Key/, 'Invalid API Key');
+like ($api_error, qr/Missing Secret API Key/, 'Invalid API Key');
