@@ -16,6 +16,7 @@ WriteMakefile(
         'Test::More' => 0,
         'HTTP::Request' => 0,
         'LWP::UserAgent' => 0,
+        'Net::SSL' => 0,
         'JSON' => 0
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },

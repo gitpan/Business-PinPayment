@@ -1,13 +1,14 @@
 package Business::PinPayment;
 use strict;
 use warnings;
+use Net::SSL;
 use HTTP::Request;
 use LWP::UserAgent;
 use JSON;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
-# build 2.1
+# build 4.1
 
 sub new {
   my ($class, %args) = (@_);
@@ -93,7 +94,7 @@ sub new {
   
   my $json_response;
   
-  if ($self->{response}->is_success) {
+  if ($self->{response}->content) {
     $json_response = from_json( $self->{response}->content, {utf8 => 1} );
     $self->{json_response} = $json_response;  
   }
@@ -112,7 +113,7 @@ sub new {
     elsif (exists $json_response->{error}) {
       $self->{status} = $json_response->{error};
 
-      my @errors = ($json_response->{error_description});
+      my @errors = ($json_response->{error_description} . '.');
       if (exists $json_response->{messages}) {
         foreach my $message (@{$json_response->{messages}}) {
           push (@errors, $message->{message} . '.');
